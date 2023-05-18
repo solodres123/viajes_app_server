@@ -595,7 +595,7 @@ io.on('connection', client => {
 	})
 
 	client.on('borrar-evento', async (payload) => {
-		try {
+		try { 
 			console.log('borrar evento solicitado')
 			const Evento = await eventos.deleteEvento(payload.id);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
