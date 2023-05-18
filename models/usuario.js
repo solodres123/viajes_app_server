@@ -13,6 +13,28 @@ class Usuario{
         this.color=color;
 
     }
+
+    getUsuarioLimitado(correo) {
+          return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM usuarios WHERE correo = ?', [correo], (err, results) => {
+              if (err) {
+                reject(err);
+              } else {
+                if (results.length == 1) {
+                  resolve(new Usuario(
+                    results[0].correo,
+                    " ",
+                    results[0].nombre,
+                    results[0].apellido_1,
+                    results[0].apellido_2,
+                    results[0].color_perfil,));
+                } else {
+                  reject(err); // Devuelve 0 si el correo proporcionado no coincide
+                }
+              }
+            });
+          });
+        }
 }
 
 

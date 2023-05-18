@@ -1,5 +1,5 @@
 const Viaje = require("./viaje");
-
+const { v4: uuidv4 } = require('uuid');
  fechaInicio = new Date();
  fechaFin = new Date();
 const mysql = require('mysql2');
@@ -12,21 +12,16 @@ const connection = mysql.createConnection ({
 });
 
 
-//  new Viaje(1,'Viaje a Viena','Viaje a Viena con la guapetona de mi novia jaja se chinchan','2021-8-01','2021-08-06','planificando','https://www.civitatis.com/blog/wp-content/uploads/2010/07/shutterstock_1450254959-1920x1280.jpg'),
-      //  new Viaje(2,'Mombeltran adventures 2023','Se vienen cositas','2021-8-14','2021-08-19','planificado','https://1.bp.blogspot.com/-Ua0XqhTztOc/YFJzXrNrFaI/AAAAAAABBSQ/yokVJ8QBxKkoS3nbHHS_B0BG4WmVCjDWACLcBGAsYHQ/s16000/Mombeltran-ayuntamiento.jpg'),
-      //  new Viaje(3,'Mapaches en Cuenca 2023','La increible historia de 4 amigos que surcaran los mares porque no saben viajar en linea recta','2021-8-25','2021-09-02','cancelado','https://www.thetrainline.com/cms/media/1399/spain-cuenca-old-town.jpg'),
-        
-
-
 class Viajes{
-
+ 
     constructor(){
-        this.viajes=[]; 
+        this.viajes=[];  
     }
 
-    getViajes() {
+    getViajes(correo) {
         return new Promise((resolve, reject) => {
-            connection.query('SELECT * FROM viajes', (err, results) => {
+            //una query que me devuelva todas las rows de la tabla para las que su id aparece en la tabla usuarios_viajes para el usuario con el correo que le paso
+            connection.query('SELECT * FROM viajes WHERE id IN (SELECT viaje_id FROM usuarios_viajes WHERE usuarios_correo = ?)', [correo], (err, results) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -42,7 +37,45 @@ class Viajes{
                 }
             });
         });
-    }  
+    }   
+    addViaje(nombre, fechaInicio, fechaFin, urlImagen) {
+        return new Promise((resolve, reject) => {
+            const id=uuidv4();
+            connection.query('INSERT INTO viajes (id,nombre,descripcion,fechaInicio,fechaFin,estado,urlImagen) VALUES (?,?,?,?,?,?,?)', [id,nombre,"",fechaInicio,fechaFin,"Planificando",urlImagen], (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    try {
+                        resolve(
+                            id
+                        );
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            });
+        });
+    }
+
+
+
+    updateViaje(id, nombre, fechaInicio, fechaFin, estado, urlImagen) {
+        return new Promise((resolve, reject) => {
+            connection.query('UPDATE viajes SET nombre = ?, fechaInicio = ?, fechaFin = ?, estado = ?, urlImagen = ? WHERE id = ?', [nombre, fechaInicio, fechaFin, estado, urlImagen, id], (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    try {
+                        resolve(
+                            new Viaje(id, nombre, "", fechaInicio, fechaFin, estado, urlImagen)
+                        );
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            });
+        });
+    }
 }
 
 module.exports=Viajes;

@@ -36,7 +36,6 @@ class Confirmaciones{
                         
                         const confirmaciones = await Promise.all(results.map(async result => {
                             const usuario = await usuarios.getUsuarioLimitado(result.usuarios_correo);
-                            console.log(usuario);
                             return new Confirmacion( result.estado,usuario,result.componentes_id);
                         }));
                         resolve(confirmaciones);
