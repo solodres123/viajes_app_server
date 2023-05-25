@@ -104,25 +104,25 @@ io.on('connection', client => {
 			console.log(payload)
 			switch (payload.tipo) {
 				case 'habitaciones':
-					client.emit('envio-this-componente-habitaciones', await componentes.getComponenteHabitaciones(payload.id))
+					client.emit('envio-this-componente-habitaciones', await componentes.getComponente(payload.id))			
 					break;
 				case 'confirmados':
-					client.emit('envio-this-componente-confirmados', await componentes.getComponenteConfirmaciones(payload.id))
+					client.emit('envio-this-componente-confirmados', await componentes.getComponente(payload.id))
 					break;
 				case 'deudas':
-					client.emit('envio-this-componente-deudas', await componentes.getComponenteDeudas(payload.id))
+					client.emit('envio-this-componente-deudas', await componentes.getComponente(payload.id))
 					break;
 				case 'tareas':
-					client.emit('envio-this-componente-tareas', await componentes.getComponenteTareas(payload.id))
+					client.emit('envio-this-componente-tareas', await componentes.getComponente(payload.id))
 					break;
 				case 'equipaje_grupal':
-					client.emit('envio-this-componente-equipaje_grupal', await componentes.getComponenteItemsGrupales(payload.id))
+					client.emit('envio-this-componente-equipaje_grupal', await componentes.getComponente(payload.id))
 					break;
 				case 'calendario':
-					client.emit('envio-this-componente-calendario', await componentes.getComponenteCalendario(payload.id))
+					client.emit('envio-this-componente-calendario', await componentes.getComponente(payload.id))
 					break;
 				case 'compra':
-					client.emit('envio-this-componente-compra', await componentes.getComponenteCompra(payload.id))
+					client.emit('envio-this-componente-compra', await componentes.getComponente(payload.id))
 					break;
 				default:
 					console.log('default')
@@ -148,6 +148,20 @@ io.on('connection', client => {
         }
     })
  
+	client.on('eliminar-viaje', async (payload) => {
+		try {
+			console.log('eliminar viaje solicitado')
+			const Viaje = await viajes.deleteViaje(payload.viaje_id);
+			io.to(payload.viaje_id).emit('actualiza-viajes');
+			console.log("viaje eliminado");
+			console.log(Viaje);
+		} catch (err) {
+			console.error('Error eliminando viaje:', err);
+		}
+	})
+
+
+
 	client.on('actualizar-viaje', async (payload) => {
 		try {
 			console.log('actualizar viaje solicitado')
@@ -166,6 +180,9 @@ io.on('connection', client => {
 		try {
 			console.log('viajes solicitados')
 			const listaViajes = await viajes.getViajes(payload);
+			listaViajes.forEach(viaje => {
+				client.join(viaje.id);
+			});
 			client.emit('envio-viajes', listaViajes);
 			console.log(listaViajes)
 		} catch (err) {
@@ -173,23 +190,14 @@ io.on('connection', client => {
 		}
 	})
 
-    
-    
 
 	client.on('solicitud-componentes-viaje', async (payload) => {
 		try {
             client.join(payload);
-            console.log('usuario añadido a viaje' + payload)
-			console.log('obtener usuarios de viaje solicitado')
 			const UsuariosViaje = await usuarios.getUsuariosViaje(payload);
-			console.log('componentes para viaje ' + payload + ' solicitados')
 			const listaComponentes = await componentes.getComponentes(payload);
-			console.log("usuarios: " + UsuariosViaje)
-			console.log("componentes: " + listaComponentes)
 			client.emit('lista-usuarios', UsuariosViaje);
 			client.emit('lista-componentes', listaComponentes);
-			console.log("usuarios de viaje enviados");
-			console.log("componentes de viaje enviados");
 		} catch (err) {
 			console.error('Error enviando la lista de usuarios o componentes:', err);
 		}
@@ -197,12 +205,9 @@ io.on('connection', client => {
 
 	client.on('creacion-nuevo-componente', async (payload) => {
 		try {
-			console.log('componentes para viaje solicitados')
 			const Componente = await componentes.addComponente(payload.tipo, payload.viaje_id, payload.color, payload.nombre);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
-			console.log("componente creado");
-			console.log(Componente);
 		} catch (err) {
 			console.error('Error creando componente:', err);
 		}
@@ -280,12 +285,22 @@ io.on('connection', client => {
 			const UsuariosViaje = await usuarios.getUsuariosViaje(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-usuarios-viaje', UsuariosViaje);
             io.to(userToSocket.get(payload.correo)).emit('añadido-a-viaje');
-			console.log("usuario añadido a viaje");
-			console.log(UsuarioViaje);
 		} catch (err) {
 			console.error('Error añadiendo usuario a viaje:', err);
 		}
 	})
+
+	client.on('borrar-usuario-de-viaje', async (payload) => {
+		try {
+			console.log('borrar usuario de viaje solicitado')
+			const UsuarioViaje = await usuarios.deleteUsuarioViaje(payload.correo, payload.viaje_id);
+			const UsuariosViaje = await usuarios.getUsuariosViaje(payload.viaje_id);
+			io.to(payload.viaje_id).emit('envio-usuarios-viaje', UsuariosViaje);
+		} catch (err) {
+			console.error('Error borrando usuario de viaje:', err);
+		}
+	})
+
 
 	//habitaciones------------------------------------------------------------------------------------------------------------
 
@@ -293,7 +308,7 @@ io.on('connection', client => {
 		try {
 			console.log('nueva habitacion solicitada')
 			await habitaciones.addHabitacion(payload.id_componente, payload.nombre);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -308,7 +323,7 @@ io.on('connection', client => {
 		try {
 			console.log('nueva cama solicitada')
 			await camas.addCama(payload.id_habitacion, payload.tipo_cama);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -323,7 +338,7 @@ io.on('connection', client => {
 		try {
 			console.log('borrado de cama solicitado')
 			const Cama = await camas.deleteCama(payload.id_cama);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -338,7 +353,7 @@ io.on('connection', client => {
 		try {
 			console.log('añadir usuario a cama solicitado')
 			const UsuarioOcupaCama = await usuarioOcupaCamas.addUsuarioOcupaCama(payload.id_cama, payload.correo);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -353,7 +368,7 @@ io.on('connection', client => {
 		try {
 			console.log('borrar usuario de cama solicitado')
 			const UsuarioOcupaCama = await usuarioOcupaCamas.deleteUsuarioOcupaCama(payload.id_cama, payload.correo);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -368,7 +383,7 @@ io.on('connection', client => {
 		try {
 			console.log('borrar habitacion solicitado')
 			const Habitacion1 = await habitaciones.deleteHabitacion(payload.id_habitacion);
-			const Habitacion = await componentes.getComponenteHabitaciones(payload.id_componente);
+			const Habitacion = await componentes.getComponente(payload.id_componente);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			io.to(payload.viaje_id).emit('envio-this-componente-habitaciones', Habitacion);
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
@@ -386,7 +401,7 @@ io.on('connection', client => {
 			console.log('cambio en confirmacion solicitado')
 			const confirmacion = await confirmaciones.changeEstadoConfirmacion(payload.id_componente, payload.correo_usuario, payload.estado);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-confirmaciones', await componentes.getComponenteConfirmaciones(payload.id_componente))
+			io.to(payload.viaje_id).emit('envio-this-componente-confirmaciones', await componentes.getComponente(payload.id_componente))
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log(confirmacion);
 		} catch (err) {
@@ -400,7 +415,7 @@ io.on('connection', client => {
 			console.log('añadir item compra solicitado')
 			const Item = await itemsCompra.addItemCompra(payload.id_componente, payload.titulo);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponenteCompra(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponente(payload.id_componente));
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
 			console.log("item añadido");
 			console.log(Item);
@@ -414,7 +429,7 @@ io.on('connection', client => {
 			console.log('borrar item compra solicitado')
 			const Item = await itemsCompra.deleteItemCompra(payload.id);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponenteCompra(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponente(payload.id_componente));
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
 			console.log("item borrado");
 			console.log(Item);
@@ -428,7 +443,7 @@ io.on('connection', client => {
 			console.log('actualizar item compra solicitado')
 			const Item = await itemsCompra.changeEstadoItemCompra(payload.id);
 			const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponenteCompra(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-compra', await componentes.getComponente(payload.id_componente));
 			io.to(payload.viaje_id).emit('lista-componentes', listaComponentes);
 			console.log("item actualizado");
 			console.log(Item);
@@ -448,7 +463,7 @@ io.on('connection', client => {
 				const DeudasPequeñas = await deudas.addDeudasPequeñas(DeudaGrande, payload.acreedor, payload.cantidadPorPersona, payload.deudores[i]);
 			}
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-deudas', await componentes.getComponenteDeudas(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-deudas', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("deuda grande añadida");
 			console.log(DeudaGrande);
@@ -462,7 +477,7 @@ io.on('connection', client => {
 			console.log('borrar deuda grande solicitado')
 			const DeudaGrande = await deudas.deleteDeuda(payload.id_deuda);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-deudas', await componentes.getComponenteDeudas(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-deudas', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("deuda grande borrada");
 			console.log(DeudaGrande);
@@ -482,7 +497,7 @@ io.on('connection', client => {
 				const TareaUsuario = await tareas.addEncargadoTarea(Tarea, payload.encargados[i]);
 			}
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponenteTareas(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("tarea añadida");
 			console.log(Tarea);
@@ -496,7 +511,7 @@ io.on('connection', client => {
 			console.log('borrar tarea solicitado')
 			const Tarea = await tareas.deleteTarea(payload.id_tarea);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponenteTareas(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("tarea borrada");
 			console.log(Tarea);
@@ -510,7 +525,7 @@ io.on('connection', client => {
 			console.log('actualizar tarea solicitado')
 			const Tarea = await tareas.updateTarea(payload.id_tarea, payload.estado);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponenteTareas(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-tareas', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("tarea actualizada");
 			console.log(Tarea);
@@ -526,7 +541,7 @@ io.on('connection', client => {
 			console.log('añadir item grupal solicitado')
 			const Item = await itemsGrupal.addItemGrupal(payload.id_componente, payload.nombre, payload.cantidad_total);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponenteItemsGrupales(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes',listaComponentes)
 			console.log("item añadido");
 			console.log(Item);
@@ -540,7 +555,7 @@ io.on('connection', client => {
 			console.log('borrar item grupal solicitado')
 			const Item = await itemsGrupal.deleteItemGrupal(payload.id);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponenteItemsGrupales(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes',listaComponentes)
 			console.log("item borrado");
 			console.log(Item);
@@ -556,7 +571,7 @@ io.on('connection', client => {
 			await itemsGrupal.updateCantidadTotalItemGrupal(payload.id_item, payload.cantidad_total);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
 			console.log('enviando componente');
-			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponenteItemsGrupales(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-equipaje_grupal', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("item modificado");
 		} catch (err) {
@@ -571,7 +586,7 @@ io.on('connection', client => {
 			console.log('añadir evento solicitado')
 			const Evento = await eventos.addEvento(payload.id_componente, payload.correo, payload.fecha_inicio, payload.fecha_final, payload.prioridad);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-calendario', await componentes.getComponenteCalendario(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-calendario', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("evento añadido");
 			console.log(Evento);
@@ -585,7 +600,7 @@ io.on('connection', client => {
 			console.log('actualizar fechas solicitado')
 			const Calendario = await calendarios.updateCalendario(payload.id_componente, payload.fecha_inicio, payload.fecha_final);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente', await componentes.getComponenteCalendario(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes',listaComponentes)
 			console.log("fechas actualizadas");
 			console.log(Calendario);
@@ -599,7 +614,7 @@ io.on('connection', client => {
 			console.log('borrar evento solicitado')
 			const Evento = await eventos.deleteEvento(payload.id);
             const listaComponentes = await componentes.getComponentes(payload.viaje_id);
-			io.to(payload.viaje_id).emit('envio-this-componente-calendario', await componentes.getComponenteCalendario(payload.id_componente));
+			io.to(payload.viaje_id).emit('envio-this-componente-calendario', await componentes.getComponente(payload.id_componente));
             io.to(payload.viaje_id).emit('lista-componentes', listaComponentes)
 			console.log("evento borrado");
 			console.log(Evento);

@@ -58,78 +58,101 @@ class Componentes{
     constructor(){
         this.componentes=[];       
     }
-
-    getComponentes(idViaje) {
+ 
+    getComponente(idComponente) {
         return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE viaje_id = ? ORDER BY indice', [idViaje], async (err, results) => {
+            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
                 if (err) {
                     reject(err);
                 } else {
                     try {
-                        const componentes = await Promise.all(results.map(async result => {
-                            if (result.tipo == "habitaciones") {
-                                const listaHabitaciones = await habitaciones.getHabitaciones(result.componentes_id);
-                                console.log(listaHabitaciones)
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaHabitaciones, result.indice,result.nombre);
-                            }else if (result.tipo == "confirmaciones") {
-                                const listaConfirmaciones = await confirmaciones.getUsusarioConfirma(result.componentes_id);
-                                console.log(listaConfirmaciones)
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaConfirmaciones, result.indice,result.nombre);
-                            } else if (result.tipo == "deudas") {
-                                const listaDeudas = await deudas.getDeudas(result.componentes_id);
-                                console.log(listaDeudas)
-                                //suma de todas las deudas
-                                let sumaDeudas = 0;
-                                for (let i = 0; i < listaDeudas.length; i++) {
-                                    sumaDeudas = sumaDeudas + parseInt(listaDeudas[i].cantidad);
-                                }
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaDeudas, result.indice,result.nombre, sumaDeudas);
-                            } else if(result.tipo=="tareas"){
-                                const listaTareas = await tareas.getTareas(result.componentes_id);
-                                console.log(listaTareas)
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaTareas, result.indice,result.nombre);
-                            } else if(result.tipo=="equipaje_grupal"){
-                                const listaItems = await items_grupal.getItemsGrupal(result.componentes_id);
-                                console.log(listaItems)
-                                let num = 0;
-                                for (let i = 0; i < listaItems.length; i++) {
-                                    if (listaItems[i].actual >= listaItems[i].cantidad_total) {
-                                        num++;
-                                    }
-                                }
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaItems, result.indice,result.nombre, num, listaItems.length);
-                            } else if (result.tipo =="calendario"){
-                                const listaEventos = await eventos.getEventos(result.componentes_id);
-                                console.log(listaEventos)
-                                const calendario = await calendarios.getCalendario(result.componentes_id);
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaEventos, result.indice,result.nombre,calendario.fechaDeInicio,calendario.fechaDeFinal);
-                            }
+                        if (results.length == 1) {
+                            const result = results[0];
+                            let componente;
+    
+                            switch(result.tipo) {
+                                case "habitaciones":
+                                    const listaHabitaciones = await habitaciones.getHabitaciones(result.componentes_id);
+                                    console.log(listaHabitaciones);
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaHabitaciones, result.indice,result.nombre);
+                                    break;
+                                case "confirmaciones":
+                                    const listaConfirmaciones = await confirmaciones.getUsusarioConfirma(result.componentes_id);
+                                    console.log(listaConfirmaciones);
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaConfirmaciones, result.indice,result.nombre);
+                                    break;
+                                case "deudas":
+                                    const listaDeudas = await deudas.getDeudas(result.componentes_id);
+                                    console.log(listaDeudas);
+                                    let sumaDeudas = 0;
+                                    for (let i = 0; i < listaDeudas.length; i++) {sumaDeudas = sumaDeudas + parseInt(listaDeudas[i].cantidad);}
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaDeudas, result.indice,result.nombre, sumaDeudas);
+                                    break;
+                                case "tareas":
+                                    const listaTareas = await tareas.getTareas(result.componentes_id);
+                                    console.log(listaTareas);
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaTareas, result.indice,result.nombre);
+                                    break;
+                                case "equipaje_grupal":
+                                    const listaItems = await items_grupal.getItemsGrupal(result.componentes_id);
+                                    let num = 0;
+                                    for (let i = 0; i < listaItems.length; i++) {if (listaItems[i].actual >= listaItems[i].cantidad_total) {num++;}}
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaItems, result.indice,result.nombre, num, listaItems.length);
+                                    break;
+                                case "calendario":
+                                    const listaEventos = await eventos.getEventos(result.componentes_id);
+                                    const calendario = await calendarios.getCalendario(result.componentes_id);
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaEventos, result.indice,result.nombre, calendario.fechaDeInicio, calendario.fechaDeFinal);
+                                    break;
+                                case "compra":
+                                    const listaItemsCompra = await items_compra.getItemsCompra(result.componentes_id);
+                                    let numItemsCompra = 0;
+                                    for (let i = 0; i < listaItemsCompra.length; i++) {if (listaItemsCompra[i].estado == "comprado") {numItemsCompra++;}}
+                                    componente = new Componente(result.componentes_id, result.tipo, result.color, listaItemsCompra, result.indice,result.nombre, numItemsCompra, listaItemsCompra.length);
+                                    break;
 
-                            else if (result.tipo =="compra"){
-                                const listaItemsCompra = await items_compra.getItemsCompra(result.componentes_id);
-                                console.log(listaItemsCompra)
-                                let numItemsCompra = 0;
-                                for (let i = 0; i < listaItemsCompra.length; i++) {
-                                    if (listaItemsCompra[i].estado == "comprado") {
-                                        numItemsCompra++;
-                                    }
-                                }
-                                return new Componente(result.componentes_id, result.tipo, result.color, listaItemsCompra, result.indice,result.nombre, numItemsCompra, listaItemsCompra.length);
+                                default:
+                                    throw new Error(`Component type ${result.tipo} is not recognized`);
                             }
-     
-                        }));
-                        console.log(componentes)
-                        resolve(componentes);
+                            console.log(componente);
+                            resolve(componente);
+                        }
                     } catch (error) {
-                        console.error('Error en get componentes: ', err)
+                        console.error('Error en get componente: ', error)
                         reject(error);
-
                     }
                 }
             });
         });
     }
 
+    getComponentes(idViaje) {
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM componentes WHERE viaje_id = ? ORDER BY indice', [idViaje], (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    try {
+                        const componentesPromises = results.map(result => this.getComponente(result.componentes_id));
+                        
+                        Promise.all(componentesPromises)
+                            .then(componentes => {
+                                resolve(componentes);
+                            })
+                            .catch(error => {
+                                console.error('Error en get componentes: ', error);
+                                reject(error);
+                            });
+    
+                    } catch (error) {
+                        console.error('Error en get componentes: ', error)
+                        reject(error);
+                    }
+                }
+            });
+        });
+    }
+    
     deleteComponente(idComponente) {
         return new Promise((resolve, reject) => {
             connection.query('DELETE FROM componentes WHERE componentes_id = ?', [idComponente], (err, results) => {
@@ -137,34 +160,6 @@ class Componentes{
                     reject(err);
                 } else {
                     resolve(results);
-                }
-            });
-        });
-    }
-
-
-    getComponenteHabitaciones(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {  
-                    try {
-                if (results.length == 1){
-                    const listaHabitaciones = await habitaciones.getHabitaciones(idComponente);
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaHabitaciones,
-                        results[0].indice,
-                        results[0].nombre)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                  }
                 }
             });
         });
@@ -192,195 +187,6 @@ class Componentes{
             });
         });
     }
-    getComponenteConfirmaciones(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {  
-                    try {
-                if (results.length == 1){
-                    const listaConfirmaciones = await confirmaciones.getUsusarioConfirma(idComponente);
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaConfirmaciones,
-                        results[0].indice,
-                        results[0].nombre)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                  }
-                }
-            });
-        });
-    }
-
-    getComponenteTareas(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    try {
-                if (results.length == 1){
-                    const listaTareas = await tareas.getTareas(idComponente);
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaTareas,
-                        results[0].indice,
-                        results[0].nombre)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                    }
-                }
-            });
-        });
-    }
-
-    getComponenteItemsGrupales(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    try {
-                if (results.length == 1){
-                    const listaItemsGrupales = await items_grupal.getItemsGrupal(idComponente);
-                    let numItems = 0;
-                    for (let i = 0; i < listaItemsGrupales.length; i++) {
-                        if (listaItemsGrupales[i].valor_actual < listaItemsGrupales[i].valor_maximo) {
-                            numItems++;
-                        }
-                    }
-
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaItemsGrupales,
-                        results[0].indice,
-                        results[0].nombre,
-                        numItems,
-                        listaItemsGrupales.length)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                    }
-                }
-            });
-        });
-    }
-
-    getComponenteCalendario(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    try {
-                if (results.length == 1){
-                    const listaEventos = await eventos.getEventos(idComponente);
-                    const calendario = await calendarios.getCalendario(idComponente);
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaEventos,
-                        results[0].indice,
-                        results[0].nombre,
-                        calendario.fechaDeInicio,
-                        calendario.fechaDeFinal)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                    }
-                }
-            });
-        });
-    }
-    
-    getComponenteCompra(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    try {
-                if (results.length == 1){
-                    const listaItemsCompra = await items_compra.getItemsCompra(idComponente);
-                    let numItemsCompra = 0;
-                    for (let i = 0; i < listaItemsCompra.length; i++) {
-                        if (listaItemsCompra[i].estado == "pendiente") {
-                            numItemsCompra++;
-                        }
-                    }
-
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaItemsCompra,
-                        results[0].indice,
-                        results[0].nombre,
-                        numItemsCompra,
-                        listaItemsCompra.length)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                    }
-                }
-            });
-        });
-    }
-
-    
-
-
-    getComponenteDeudas(idComponente) {
-        return new Promise(async (resolve, reject) => {
-            connection.query('SELECT * FROM componentes WHERE componentes_id = ?', [idComponente], async (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {  
-                    try {
-                if (results.length == 1){
-                    const listaDeudas = await deudas.getDeudas(idComponente);
-                    const temp = new Componente(
-                        results[0].componentes_id,
-                        results[0].tipo,
-                        results[0].color,
-                        listaDeudas,
-                        results[0].indice,
-                        results[0].nombre)
-                        console.log(temp)
-                        resolve(temp);
-                    }
-                    }catch (error) {
-                    reject(error);
-                  }
-                }
-            }
-            );
-
 }
-        );
-    }
-}
-
 
 module.exports=Componentes;

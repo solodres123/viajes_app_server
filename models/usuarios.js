@@ -175,6 +175,24 @@ addUsuarioViaje(correo,viaje_id) {
     });
 }
 
+deleteUsuarioViaje(correo,viaje_id) {
+    return new Promise((resolve, reject) => {
+        connection.query('DELETE FROM usuarios_viajes WHERE viaje_id = ? AND usuarios_correo = ?', [viaje_id,correo], (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                try {
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }
+        });
+
+    });
+}
+
+
 
 
   getDeudores(deuda_id) {

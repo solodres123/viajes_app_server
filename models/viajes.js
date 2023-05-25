@@ -57,6 +57,23 @@ class Viajes{
         });
     }
 
+    deleteViaje(id) {
+        return new Promise((resolve, reject) => {
+            connection.query('DELETE FROM viajes WHERE id = ?', [id], (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    try {
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            });
+        });
+    }
+    
+
 
 
     updateViaje(id, nombre, fechaInicio, fechaFin, estado, urlImagen) {
