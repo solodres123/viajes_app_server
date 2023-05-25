@@ -1,10 +1,10 @@
-const Deuda= require("./deuda");
+const Deuda= require("../../../models/componentes/deudas/deuda");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
-const DeudaPequena= require("./deuda_pequena");
+const DeudaPequena= require("../../../models/componentes/deudas/deuda_pequena");
 
 const { v4: uuidv4 } = require('uuid');
 

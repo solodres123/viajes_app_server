@@ -1,7 +1,7 @@
-const Confirmacion= require("./confirmacion");
+const Confirmacion= require("../../../models/componentes/confirmaciones/confirmacion");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
 

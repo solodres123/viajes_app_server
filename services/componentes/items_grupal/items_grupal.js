@@ -1,10 +1,10 @@
-const ItemGrupal = require("./item_grupal");
+const ItemGrupal = require("../../../models/componentes/items_grupal/item_grupal");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
-const Asignacion= require("./asignacion");
+const Asignacion= require("../../../models/componentes/items_grupal/asignacion");
 
 const { v4: uuidv4 } = require('uuid');
 

@@ -1,7 +1,7 @@
-const UsuarioOcupaCama= require("./usuario_ocupa_cama");
+const UsuarioOcupaCama= require("../../../models/componentes/habitaciones/usuario_ocupa_cama");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
 

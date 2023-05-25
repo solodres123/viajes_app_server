@@ -1,26 +1,26 @@
-const Componente = require("./componente");
+const Componente = require("../../models/componentes/componente");
 const Habitaciones = require("./habitaciones/habitaciones");
-const Habitacion = require("./habitaciones/habitacion");
+const Habitacion = require("../../models/componentes/habitaciones/habitacion");
 const habitaciones = new Habitaciones();
 
 const Confirmaciones = require("./confirmaciones/confirmaciones");
-const Confirmacion = require("./confirmaciones/confirmacion");
+const Confirmacion = require("../../models/componentes/confirmaciones/confirmacion");
 const confirmaciones = new Confirmaciones();
 
 const Items_grupal = require("./items_grupal/items_grupal");
-const Item_grupal = require("./items_grupal/item_grupal");
+const Item_grupal = require("../../models/componentes/items_grupal/item_grupal");
 const items_grupal = new Items_grupal();
 
 const Eventos = require("./calendario/eventos");
-const Evento = require("./calendario/evento");
+const Evento = require("../../models/componentes/calendario/evento");
 const eventos = new Eventos();
 
 const Calendarios = require("./calendario/calendarios");
-const Calendario = require("./calendario/calendario");
+const Calendario = require("../../models/componentes/calendario/calendario");
 const calendarios = new Calendarios();
 
 const Items_compra = require("./compra/items_compra");
-const Item_compra = require("./compra/item_compra");
+const Item_compra = require("../../models/componentes/compra/item_compra");
 const items_compra = new Items_compra();
 
 
@@ -28,11 +28,11 @@ const items_compra = new Items_compra();
 
 
 const Tareas = require("./tareas/tareas");
-const Tarea = require("./tareas/tarea");
+const Tarea = require("../../models/componentes/tareas/tarea");
 const tareas = new Tareas();
 
 const Deudas = require("./deudas/deudas");
-const Deuda = require("./deudas/deuda");
+const Deuda = require("../../models/componentes/deudas/deuda");
 const deudas = new Deudas();
 
 const { v4: uuidv4 } = require('uuid');

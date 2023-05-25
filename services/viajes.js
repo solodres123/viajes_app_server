@@ -1,4 +1,4 @@
-const Viaje = require("./viaje");
+const Viaje = require("../models/viaje");
 const { v4: uuidv4 } = require('uuid');
  fechaInicio = new Date();
  fechaFin = new Date();

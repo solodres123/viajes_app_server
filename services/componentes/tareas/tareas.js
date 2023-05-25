@@ -1,8 +1,8 @@
 
-const Tarea= require("./tarea");
+const Tarea= require("../../../models/componentes/tareas/tarea");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
 const { v4: uuidv4 } = require('uuid');

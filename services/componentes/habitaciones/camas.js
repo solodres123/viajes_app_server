@@ -1,8 +1,8 @@
-const Cama= require("./cama");
+const Cama= require("../../../models/componentes/habitaciones/cama");
 
 
 const UsuarioOcupaCamas= require('./usuario_ocupa_camas')
-const UsuarioOcupaCama= require('./usuario_ocupa_cama')
+const UsuarioOcupaCama= require('../../../models/componentes/habitaciones/usuario_ocupa_cama')
 const usuario_ocupa_camas = new UsuarioOcupaCamas();
 const { v4: uuidv4 } = require('uuid');
 

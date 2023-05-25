@@ -1,7 +1,7 @@
-const Calendario= require("./calendario");
+const Calendario= require("../../../models/componentes/calendario/calendario");
 
 const Usuarios= require('../../usuarios')
-const Usuario= require('../../usuario')
+const Usuario= require('../../../models/usuario')
 const usuarios = new Usuarios();
 
 
